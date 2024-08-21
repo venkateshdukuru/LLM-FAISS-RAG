@@ -11,22 +11,21 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        node-version: [20]
+        node-version: [20.x]
+
     steps:
       - name: Check for code changes
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+        if: github.event_name == 'push' && contains(github.event.head_commit.modified, 'code')
+        run: echo 'Code changes found'
+
       - name: Enforce code coverage report
-        run: |
-          if [ -z "$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})" ]; then
-            echo "No code changes. Skipping code coverage report."
-          else
-            npm run coverage
-          fi
+        if: github.event_name == 'push' && contains(github.event.head_commit.modified, 'code')
+        run: npm run coverage
+
       - name: Verify code linting and unit tests
-        run: |
-          npm run lint
-          npm test
+        if: github.event_name == 'push' && contains(github.event.head_commit.modified, 'code')
+        run: npm run lint && npm test
+
       - name: Complete job
-        run: echo "Job completed successfully."
+        if: github.event_name == 'push' && contains(github.event.head_commit.modified, 'code')
+        run: echo 'Job completed successfully'

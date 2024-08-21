@@ -14,15 +14,19 @@ jobs:
         node-version: [20]
     steps:
       - name: Check for code changes
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: |
-          git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | grep '\.js$'
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Enforce code coverage report
-        if: ${{ steps.check-code-changes.outputs.code-changes == 'true' }}
-        run: npm run code-coverage
+        run: |
+          if [ -z "$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})" ]; then
+            echo "No code changes. Skipping code coverage report."
+          else
+            npm run coverage
+          fi
       - name: Verify code linting and unit tests
-        if: ${{ steps.check-code-changes.outputs.code-changes == 'true' }}
-        run: npm run lint && npm run test
+        run: |
+          npm run lint
+          npm test
       - name: Complete job
-        if: ${{ steps.check-code-changes.outputs.code-changes == 'true' }}
         run: echo "Job completed successfully."
